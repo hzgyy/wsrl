@@ -45,8 +45,6 @@ def get_hand_dataset_with_mc_calculation(
         env_name,
         dataset,
         i,
-        reward_scale,
-        reward_bias,
         gamma,
         start_index=None,
         end_index=None,
@@ -62,15 +60,12 @@ def get_hand_dataset_with_mc_calculation(
         ]
         rewards = dataset[i]["rewards"][start_index:end_index]
         dones = rewards == 0  # by default, adroit has -1/0 rewards
-        rewards = rewards * reward_scale + reward_bias
         actions = np.array(dataset[i]["actions"])[start_index:end_index]
         mc_returns = calc_return_to_go(
             env_name,
             rewards,
             1 - dones,
             gamma,
-            reward_scale,
-            reward_bias,
             infinite_horizon=False,
         )
 
@@ -120,8 +115,6 @@ def get_hand_dataset_with_mc_calculation(
                 env_name,
                 dataset,
                 i,
-                reward_scale,
-                reward_bias,
                 gamma,
                 start_index=None,
                 end_index=trunc_ind,
@@ -143,8 +136,6 @@ def get_hand_dataset_with_mc_calculation(
                 env_name,
                 dataset_bc,
                 i,
-                reward_scale,
-                reward_bias,
                 gamma,
                 start_index=None,
                 end_index=trunc_ind,
@@ -162,9 +153,11 @@ def get_hand_dataset_with_mc_calculation(
             [batch[key] for batch in dataset], axis=0
         ).astype(np.float32)
 
+    # global transforms
     if clip_action:
         concatenated["actions"] = np.clip(
             concatenated["actions"], -clip_action, clip_action
         )
+    concatenated["rewards"] = concatenated["rewards"] * reward_scale + reward_bias
 
     return concatenated
