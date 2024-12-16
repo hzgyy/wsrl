@@ -21,6 +21,7 @@ def make_gym_env(
     reward_scale: Optional[float] = None,
     reward_bias: Optional[float] = None,
     scale_and_clip_action: bool = False,
+    action_clip_lim: Optional[float] = None,
     max_episode_steps: Optional[int] = None,
     seed: int = 0,
 ):
@@ -45,7 +46,7 @@ def make_gym_env(
 
     if scale_and_clip_action:
         # avoid NaNs for dist.log_prob(1.0) for tanh policies
-        env = gym.wrappers.RescaleAction(env, -0.999, 0.999)
+        env = gym.wrappers.RescaleAction(env, -action_clip_lim, action_clip_lim)
         env = gym.wrappers.ClipAction(env)
 
     if reward_scale is not None and reward_bias is not None:

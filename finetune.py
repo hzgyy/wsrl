@@ -29,7 +29,11 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("env", "antmaze-large-diverse-v2", "Environemnt to use")
 flags.DEFINE_float("reward_scale", 1.0, "Reward scale.")
 flags.DEFINE_float("reward_bias", -1.0, "Reward bias.")
-flags.DEFINE_float("clip_action", 0.99999, "Clip action magnitude.")
+flags.DEFINE_float(
+    "clip_action",
+    0.99999,
+    "Clip actions to be between [-n, n]. This is needed for tanh policies.",
+)
 
 # training
 flags.DEFINE_integer("num_offline_steps", 1_000_000, "Number of offline epochs.")
@@ -132,12 +136,14 @@ def main(_):
         env_name=FLAGS.env,
         reward_scale=FLAGS.reward_scale,
         reward_bias=FLAGS.reward_bias,
-        scale_and_clip_action=env_type in ("locomotion", "antmaze", "kitchen"),
+        scale_and_clip_action=True,
+        action_clip_lim=FLAGS.clip_action,
         seed=FLAGS.seed,
     )
     eval_env = make_gym_env(
         env_name=FLAGS.env,
-        scale_and_clip_action=env_type in ("locomotion", "antmaze", "kitchen"),
+        scale_and_clip_action=True,
+        action_clip_lim=FLAGS.clip_action,
         seed=FLAGS.seed + 1000,
     )
 
@@ -165,8 +171,9 @@ def main(_):
         else:
             dataset = get_d4rl_dataset(
                 FLAGS.env,
-                clip_to_eps=True,
-                eps=(1 - FLAGS.clip_action),
+                reward_scale=FLAGS.reward_scale,
+                reward_bias=FLAGS.reward_bias,
+                clip_action=FLAGS.clip_action,
             )
             dataset["rewards"] = (
                 dataset["rewards"] * FLAGS.reward_scale + FLAGS.reward_bias

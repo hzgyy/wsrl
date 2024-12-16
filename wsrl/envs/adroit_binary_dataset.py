@@ -1,3 +1,6 @@
+"""
+source: https://github.com/nakamotoo/Cal-QL/blob/ac6eafec22e8d60836573e1f488c7f626ce8a77e/JaxCQL/replay_buffer.py
+"""
 import os
 
 import numpy as np
@@ -103,11 +106,6 @@ def get_hand_dataset_with_mc_calculation(
             ):
                 dataset[i]["rewards"] = dataset[i]["rewards"][:N]
 
-            if clip_action:
-                dataset[i]["actions"] = np.clip(
-                    dataset[i]["actions"], -clip_action, clip_action
-                )
-
             assert (
                 np.array(dataset[i]["rewards"]).shape
                 == np.array(dataset[i]["terminals"]).shape
@@ -137,10 +135,6 @@ def get_hand_dataset_with_mc_calculation(
             dataset_bc[i]["rewards"] = dataset_bc[i]["rewards"].squeeze()
             dataset_bc[i]["dones"] = dataset_bc[i]["terminals"].squeeze()
             dataset_bc[i].pop("terminals", None)
-            if clip_action:
-                dataset_bc[i]["actions"] = np.clip(
-                    dataset_bc[i]["actions"], -clip_action, clip_action
-                )
 
             if not (0 in dataset_bc[i]["rewards"]):
                 continue
@@ -167,5 +161,10 @@ def get_hand_dataset_with_mc_calculation(
         concatenated[key] = np.concatenate(
             [batch[key] for batch in dataset], axis=0
         ).astype(np.float32)
+
+    if clip_action:
+        concatenated["actions"] = np.clip(
+            concatenated["actions"], -clip_action, clip_action
+        )
 
     return concatenated

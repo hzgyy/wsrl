@@ -1,4 +1,5 @@
 import collections
+from typing import Optional
 
 import d4rl
 import gym
@@ -101,14 +102,14 @@ def get_d4rl_dataset_by_trajectory(env, dataset=None, terminate_on_end=False, **
 
 def get_d4rl_dataset(
     env,
-    clip_to_eps: bool = True,
-    eps: float = 1e-5,
+    reward_scale: float = 1.0,
+    reward_bias: float = 0.0,
+    clip_action: Optional[float] = None,
 ):
     dataset = d4rl.qlearning_dataset(gym.make(env).unwrapped)
 
-    if clip_to_eps:
-        lim = 1 - eps
-        dataset["actions"] = np.clip(dataset["actions"], -lim, lim)
+    if clip_action:
+        dataset["actions"] = np.clip(dataset["actions"], -clip_action, clip_action)
 
     dones_float = np.zeros_like(dataset["rewards"])
 
@@ -117,7 +118,7 @@ def get_d4rl_dataset(
         dones_float = dataset["rewards"] == 4
 
     else:
-        # antmaze envs
+        # antmaze / locomotion envs
         for i in range(len(dones_float) - 1):
             if (
                 np.linalg.norm(
@@ -131,6 +132,9 @@ def get_d4rl_dataset(
                 dones_float[i] = 0
 
         dones_float[-1] = 1
+
+    # reward scale and bias
+    dataset["rewards"] = dataset["rewards"] * reward_scale + reward_bias
 
     return dict(
         observations=dataset["observations"],
