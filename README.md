@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://zhouzypaul.github.io/wsrl)
 
-This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of WSRL (Warm-Start Reinforcement Learning), as well as popular RL algorithms in JAX and Flax: IQL, CQL, CalQL, SAC, RLPD.
+This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of [WSRL](http://arxiv.org/abs/2412.07762) (Warm-Start Reinforcement Learning), as well as popular RL algorithms in JAX and Flax: [IQL](https://arxiv.org/abs/2110.06169), [CQL](https://arxiv.org/abs/2006.04779), [CalQL](https://arxiv.org/abs/2303.05479), [SAC](https://arxiv.org/abs/1801.01290), [RLPD](https://arxiv.org/abs/2302.02948).
 We support the following environments: D4RL antmaze, adroit, kitchen, and Mujoco locomotion, but the code can be easily adpated to work with other environments and datasets.
 
 ```
@@ -30,14 +30,15 @@ For jax, install
 pip install --upgrade "jax[cuda11_pip]==0.4.20" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 ```
 
-To use the D4RL envs, you would also need my fork of the d4rl envs here:
+To use the D4RL envs, you would also need my fork of the d4rl envs below.
+This fork incorporates the antmaze-ultra environments and fixes the kitchen environment rewards to be consistent between the offline dataset and the environment.
 ```
 git clone git@github.com:zhouzypaul/D4RL.git
 cd D4RL
 pip install -e .
 ```
 
-To use Mujoco, you would also need to install mujoco manually to `~/.mujoco/`, and use the following environment variables
+To use Mujoco, you would also need to install mujoco manually to `~/.mujoco/` (for more instructions on download see [here](https://github.com/openai/mujoco-py?tab=readme-ov-file#install-mujoco)), and use the following environment variables
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
@@ -52,7 +53,7 @@ pip install -e .
 ```
 
 Download the adroit dataset from [here](https://drive.google.com/file/d/1yUdJnGgYit94X_AvV6JJP5Y3Lx2JF30Y/view) and unzip the files into `~/adroit_data/`.
-If you would like to put the adroit datasets into another directory, use the environment variable
+If you would like to put the adroit datasets into another directory, use the environment variable `DATA_DIR_PREFIX` (checkout the code [here](https://github.com/zhouzypaul/wsrl/blob/4b5665987079934a926c10a09bd81bc3c48ea9fa/wsrl/envs/adroit_binary_dataset.py#L7) for more details).
 ```bash
 export DATA_DIR_PREFIX=/path/to/your/data
 ```
@@ -105,4 +106,4 @@ pre-commit install
 The hooks should now run before every commit. If files are modified during the checks, you'll need to re-stage them and commit again.
 
 ## Credits
-This repo is built upon a version of Dibya Ghosh's [jaxrl_minimal](https://github.com/dibyaghosh/jaxrl_minimal) repository with contributions also from Kevin Black, Homer Walke, Kyle Stachowicz, and others.
+This repo is built upon a version of Dibya Ghosh's [jaxrl_minimal](https://github.com/dibyaghosh/jaxrl_minimal) repository, which also included contributions from Kevin Black, Homer Walke, Kyle Stachowicz, and others.
