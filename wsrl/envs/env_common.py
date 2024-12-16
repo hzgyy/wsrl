@@ -4,6 +4,7 @@ import d4rl
 import gym
 import mj_envs
 import numpy as np
+from absl import flags
 
 from wsrl.envs.wrappers import (
     AdroitTerminalWrapper,
@@ -11,6 +12,8 @@ from wsrl.envs.wrappers import (
     ScaledRewardWrapper,
     TruncationWrapper,
 )
+
+FLAGS = flags.FLAGS
 
 
 def make_gym_env(
@@ -122,6 +125,11 @@ def _get_negative_reward(env_name, reward_scale, reward_bias):
     """
     Given an environment with sparse rewards (aka there's only two reward values,
     the goal reward when the task is done, or the step penalty otherwise).
+    Args:
+        env_name: the name of the environment
+        reward_scale: the reward scale
+        reward_bias: the reward bias. The reward_scale and reward_bias are not applied
+            here to scale the reward, but to determine the correct negative reward value.
 
     NOTE: this function should only be called on sparse-reward environments
     """
@@ -153,20 +161,31 @@ def calc_return_to_go(
     rewards,
     masks,
     gamma,
-    reward_scale,
-    reward_bias,
+    reward_scale=None,
+    reward_bias=None,
     infinite_horizon=False,
 ):
     """
     Calculat the Monte Carlo return to go given a list of reward for a single trajectory.
     Args:
+        env_name: the name of the environment
         rewards: a list of rewards
         masks: a list of done masks
+        gamma: the discount factor used to discount rewards
+        reward_scale, reward_bias: the reward scale and bias used to determine
+            the negative reward value for sparse-reward environments. If None,
+            default from FLAGS values. Leave None unless for special cases.
+        infinite_horizon: whether the MDP has inifite horizion (and therefore infinite return to go)
     """
     if len(rewards) == 0:
         return np.array([])
 
     # process sparse-reward envs
+    if reward_scale is None or reward_bias is None:
+        # scale and bias not applied, but used to determien the negative reward value
+        assert reward_scale is None and reward_bias is None  # both should be unset
+        reward_scale = FLAGS.reward_scale
+        reward_bias = FLAGS.reward_bias
     is_sparse_reward = _determine_whether_sparse_reward(env_name)
     if is_sparse_reward:
         reward_neg = _get_negative_reward(env_name, reward_scale, reward_bias)

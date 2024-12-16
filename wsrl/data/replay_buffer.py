@@ -176,8 +176,6 @@ class ReplayBufferMC(ReplayBuffer):
                 rewards,
                 masks,
                 self._discount,
-                FLAGS.reward_scale,
-                FLAGS.reward_bias,
             )
 
             self._allow_idxs.extend(
