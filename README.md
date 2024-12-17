@@ -96,7 +96,7 @@ bash experiments/scripts/locomotion/launch_wsrl_finetune.sh --env halfcheetah-me
 ```
 
 ### No Data Retention
-The default setting is to not retain offline data during fine-tuning, as described in the [paper](http://arxiv.org/abs/2412.07762). However, if you wish to retain the data, you can use the `--mixing_ratio <>` or `--online_sampling_method append` option. Checkout `finetune.py` for more details.
+The default setting is to not retain offline data during fine-tuning, as described in the [paper](http://arxiv.org/abs/2412.07762). However, if you wish to retain the data, you can use the `--offline_data_ratio <>` or `--online_sampling_method append` option. Checkout `finetune.py` for more details.
 
 ## Contributing
 To enable code checks and auto-formatting, please install pre-commit hooks (run this in the root directory):

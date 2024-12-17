@@ -38,15 +38,25 @@ flags.DEFINE_float(
 # training
 flags.DEFINE_integer("num_offline_steps", 1_000_000, "Number of offline epochs.")
 flags.DEFINE_integer("num_online_steps", 500_000, "Number of online epochs.")
-flags.DEFINE_float("mixing_ratio", 0.0, "Ratio of offline data to online data.")
+flags.DEFINE_float(
+    "offline_data_ratio",
+    0.0,
+    "How much offline data to retain in each online batch update",
+)
 flags.DEFINE_string(
-    "online_sampling_method", "mixed", "Method of online sampling, from mixed, append"
+    "online_sampling_method",
+    "mixed",
+    """Method of sampling data during online update: mixed or append.
+    `mixed` samples from a mix of offline and online data according to offline_data_ratio.
+    `append` adds offline data to replay buffer and samples from it.""",
 )
 flags.DEFINE_bool(
-    "online_use_cql_loss", True, "use CQL loss for online CQL (SAC loss if False)"
+    "online_use_cql_loss",
+    True,
+    """When agent is CQL/CalQL, whether to use CQL loss for the online phase (use SAC loss if False)""",
 )
 flags.DEFINE_integer(
-    "warmup_steps", 0, "number of warmup steps before performing online updates"
+    "warmup_steps", 0, "number of warmup steps (WSRL) before performing online updates"
 )
 
 # agent
@@ -98,7 +108,7 @@ def main(_):
     if FLAGS.use_redq:
         FLAGS.config.agent_kwargs = add_redq_config(FLAGS.config.agent_kwargs)
 
-    min_steps_to_update = FLAGS.batch_size * (1 - FLAGS.mixing_ratio)
+    min_steps_to_update = FLAGS.batch_size * (1 - FLAGS.offline_data_ratio)
     if FLAGS.agent == "calql":
         min_steps_to_update = max(
             min_steps_to_update, gym.make(FLAGS.env)._max_episode_steps
@@ -335,7 +345,9 @@ def main(_):
                     # do online updates, gather batch
                     if FLAGS.online_sampling_method == "mixed":
                         # batch from a mixing ratio of offline and online data
-                        batch_size_offline = int(FLAGS.batch_size * FLAGS.mixing_ratio)
+                        batch_size_offline = int(
+                            FLAGS.batch_size * FLAGS.offline_data_ratio
+                        )
                         batch_size_online = FLAGS.batch_size - batch_size_offline
                         online_batch = replay_buffer.sample(batch_size_online)
                         offline_batch = subsample_batch(dataset, batch_size_offline)

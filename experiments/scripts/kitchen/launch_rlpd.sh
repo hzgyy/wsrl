@@ -7,7 +7,7 @@ python3 finetune.py \
 --config experiments/configs/train_config.py:kitchen_wsrl \
 --project baselines-section \
 --num_offline_steps 0 \
---mixing_ratio 0.5 \
+--offline_data_ratio 0.5 \
 --reward_scale 1.0 \
 --reward_bias -4.0 \
 --utd 4 \
