@@ -524,7 +524,7 @@ class SACAgent(flax.struct.PyTreeNode):
 
         # Config
         if target_entropy is None or target_entropy >= 0.0:
-            target_entropy = -actions.shape[-1] / 2
+            target_entropy = -actions.shape[-1]
 
         return cls(
             state=state,
