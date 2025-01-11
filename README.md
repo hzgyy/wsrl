@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://zhouzypaul.github.io/wsrl)
 
-This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of [WSRL](http://arxiv.org/abs/2412.07762) (Warm-Start Reinforcement Learning), as well as popular RL algorithms in JAX and Flax: [IQL](https://arxiv.org/abs/2110.06169), [CQL](https://arxiv.org/abs/2006.04779), [CalQL](https://arxiv.org/abs/2303.05479), [SAC](https://arxiv.org/abs/1801.01290), [RLPD](https://arxiv.org/abs/2302.02948).
+This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of [WSRL](http://arxiv.org/abs/2412.07762) (Warm-Start Reinforcement Learning), as well as popular RL algorithms in JAX and Flax: [IQL](https://arxiv.org/abs/2110.06169), [CQL](https://arxiv.org/abs/2006.04779), [CalQL](https://arxiv.org/abs/2303.05479), [SAC](https://arxiv.org/abs/1801.01290), [RLPD](https://arxiv.org/abs/2302.02948). Variants of SAC also supported, such as [TD3](https://arxiv.org/pdf/1802.09477), [REDQ](https://arxiv.org/abs/2101.05982), and IQL policy extraction supports both AWR and DDPG+BC.
 We support the following environments: D4RL antmaze, adroit, kitchen, and Mujoco locomotion, but the code can be easily adpated to work with other environments and datasets.
 
 ```

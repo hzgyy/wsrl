@@ -141,6 +141,8 @@ def main(_):
     """
     env
     """
+    # do not clip adroit actions online following CalQL repo
+    # https://github.com/nakamotoo/Cal-QL
     env_type = get_env_type(FLAGS.env)
     finetune_env = make_gym_env(
         env_name=FLAGS.env,
