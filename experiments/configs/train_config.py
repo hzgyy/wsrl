@@ -270,8 +270,6 @@ def get_config(config_string):
                             "kernel_scale_final": 1e-2,
                             "use_layer_norm": True,
                         },
-                        online_cql_alpha=5.0,
-                        cql_alpha=5.0,
                     )
                 ).to_dict(),
             )
