@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Static Badge](https://img.shields.io/badge/Project-Page-a?style=for-the-badge)](https://zhouzypaul.github.io/wsrl)
 
-This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of [WSRL](http://arxiv.org/abs/2412.07762) (Warm-Start Reinforcement Learning), as well as popular RL algorithms in JAX and Flax: [IQL](https://arxiv.org/abs/2110.06169), [CQL](https://arxiv.org/abs/2006.04779), [CalQL](https://arxiv.org/abs/2303.05479), [SAC](https://arxiv.org/abs/1801.01290), [RLPD](https://arxiv.org/abs/2302.02948). Variants of SAC also supported, such as [TD3](https://arxiv.org/pdf/1802.09477), [REDQ](https://arxiv.org/abs/2101.05982), and IQL policy extraction supports both AWR and DDPG+BC.
+This is the code release for paper [Efficient Online Reinforcement Learning Fine-Tuning Need Not Retain Offline Data](http://arxiv.org/abs/2412.07762). We provide the implementation of [WSRL](http://arxiv.org/abs/2412.07762) (Warm-Start Reinforcement Learning), as well as popular actor-critic RL algorithms in JAX and Flax: [IQL](https://arxiv.org/abs/2110.06169), [CQL](https://arxiv.org/abs/2006.04779), [CalQL](https://arxiv.org/abs/2303.05479), [SAC](https://arxiv.org/abs/1801.01290), [RLPD](https://arxiv.org/abs/2302.02948). Variants of SAC also supported, such as [TD3](https://arxiv.org/pdf/1802.09477), [REDQ](https://arxiv.org/abs/2101.05982), and IQL policy extraction supports both AWR and DDPG+BC.
 We support the following environments: D4RL antmaze, adroit, kitchen, and Mujoco locomotion, but the code can be easily adpated to work with other environments and datasets.
 
 ```
@@ -75,8 +75,8 @@ bash experiments/scripts/adroit/launch_calql_finetune.sh --use_redq --env door-b
 # on kitchen
 bash experiments/scripts/kitchen/launch_calql_finetune.sh --use_redq --env kitchen-mixed-v0
 
-# on mujoco locomotion
-bash experiments/scripts/locomotion/launch_calql_finetune.sh --use_redq --env halfcheetah-medium-replay-v0
+# on mujoco locomotion (CQL pre-train because MC returns are hard to estimate)
+bash experiments/scripts/locomotion/launch_cql_finetune.sh --use_redq --env halfcheetah-medium-replay-v0
 ```
 
 ### Fine-tuning
@@ -99,6 +99,8 @@ bash experiments/scripts/locomotion/launch_wsrl_finetune.sh --env halfcheetah-me
 The default setting is to not retain offline data during fine-tuning, as described in the [paper](http://arxiv.org/abs/2412.07762). However, if you wish to retain the data, you can use the `--offline_data_ratio <>` or `--online_sampling_method append` option. Checkout `finetune.py` for more details.
 
 ## Contributing
+For a detailed explanation of how the codebase works, please checkout the [contributing.md](contributing.md) file.
+
 To enable code checks and auto-formatting, please install pre-commit hooks (run this in the root directory):
 ```
 pre-commit install
