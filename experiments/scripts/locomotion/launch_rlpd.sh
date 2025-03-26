@@ -4,7 +4,7 @@ export MUJOCO_GL=egl
 
 python3 finetune.py \
 --agent sac \
---config experiments/configs/train_config.py:locomotion_cql_redq \
+--config experiments/configs/train_config.py:locomotion_wsrl \
 --project baselines-section \
 --reward_scale 1.0 \
 --reward_bias 0.0 \
