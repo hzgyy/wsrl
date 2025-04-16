@@ -187,9 +187,6 @@ def main(_):
                 reward_bias=FLAGS.reward_bias,
                 clip_action=FLAGS.clip_action,
             )
-            dataset["rewards"] = (
-                dataset["rewards"] * FLAGS.reward_scale + FLAGS.reward_bias
-            )
 
     """
     replay buffer
