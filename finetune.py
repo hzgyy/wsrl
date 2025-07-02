@@ -256,6 +256,10 @@ def main(_):
             ] = np.mean(
                 [eval_env.get_normalized_score(np.sum(t["rewards"])) for t in trajs]
             )
+        
+        #calculate kl
+        batch = subsample_batch(dataset, 512)
+        
 
         wandb_logger.log({"evaluation": eval_info}, step=step_number)
 
