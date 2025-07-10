@@ -12,5 +12,5 @@ python3 finetune.py \
 --env kitchen-partial-v0 \
 --utd 4 \
 --batch_size 1024 \
---warmup_steps 5000 \
+--warmup_steps 0 \
 $@

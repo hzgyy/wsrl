@@ -76,6 +76,8 @@ def get_env_type(env_name):
         env_type = "kitchen"
     elif "halfcheetah" in env_name or "hopper" in env_name or "walker" in env_name:
         env_type = "locomotion"
+    elif env_name in ("Lift","PickPlaceCan","NutAssemblySquare","TwoArmTransport","ToolHang"):
+        env_type = "robosuite"
     else:
         raise RuntimeError(f"Unknown environment type for {env_name}")
 

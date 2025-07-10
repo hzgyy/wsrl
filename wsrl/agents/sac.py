@@ -162,6 +162,23 @@ class SACAgent(flax.struct.PyTreeNode):
         q = q.min(axis=0)
         return q
 
+    @jax.jit
+    def forward_values(
+        self,
+        observations: Union[Data, Tuple[Data, Data]],
+        *,
+        train: bool = False,
+    ) -> jax.Array:
+        """
+        Get the option state-value function
+        This is never needed in training, only for evaluation
+        """
+        pi_dist = self.forward_policy(observations, train=False)
+        action = pi_dist.mode()
+        qs = self.forward_critic(observations, action, train=False)
+        q = qs.min(axis=0)
+        return q,qs
+
     def temperature_lagrange_penalty(
         self, entropy: jnp.ndarray, *, grad_params: Optional[Params] = None
     ) -> distrax.Distribution:

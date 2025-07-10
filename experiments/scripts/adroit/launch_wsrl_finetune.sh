@@ -8,11 +8,12 @@ python3 finetune.py \
 --agent sac \
 --config experiments/configs/train_config.py:adroit_wsrl \
 --project method-section \
---num_offline_steps 20_000 \
+--online_sampling_method append \
+--num_offline_steps 20000 \
 --reward_scale 10.0 \
 --reward_bias 5.0 \
 --env pen-binary-v0 \
 --utd 4 \
 --batch_size 1024 \
---warmup_steps 5000 \
+--warmup_steps 0 \
 $@

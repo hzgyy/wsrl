@@ -10,9 +10,11 @@ python finetune.py \
 --project baselines-section \
 --group no-redq-utd1 \
 --warmup_steps 0 \
---num_offline_steps 100_000 \
+--num_offline_steps 300_000 \
 --save_interval 20_000 \
---reward_scale 10.0 \
---reward_bias 5.0 \
---env pen-binary-v0 \
+--eval_interval 20_000 \
+--reward_scale 1.0 \
+--reward_bias 0.0 \
+--env "NutAssemblySquare" \
+--data_path "/home/admin/ibrl/release/data/robomimic/square/processed_data96.hdf5" \
 $@

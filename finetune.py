@@ -3,6 +3,7 @@ from functools import partial
 
 import gym
 import jax
+import jax.numpy as jnp
 import numpy as np
 import tqdm
 from absl import app, flags, logging
@@ -22,6 +23,8 @@ from wsrl.envs.d4rl_dataset import (
 from wsrl.envs.env_common import get_env_type, make_gym_env
 from wsrl.utils.timer_utils import Timer
 from wsrl.utils.train_utils import concatenate_batches, subsample_batch
+from wsrl.envs.robosuit_env import robosuite_env, get_robosuite_dataset, get_robosuite_dataset_mc
+from jax import default_backend
 
 FLAGS = flags.FLAGS
 
@@ -58,6 +61,7 @@ flags.DEFINE_bool(
 flags.DEFINE_integer(
     "warmup_steps", 0, "number of warmup steps (WSRL) before performing online updates"
 )
+flags.DEFINE_string("data_path", None, "data path to the offline training data")
 
 # agent
 flags.DEFINE_string("agent", "calql", "what RL agent to use")
@@ -144,21 +148,31 @@ def main(_):
     # do not clip adroit actions online following CalQL repo
     # https://github.com/nakamotoo/Cal-QL
     env_type = get_env_type(FLAGS.env)
-    finetune_env = make_gym_env(
-        env_name=FLAGS.env,
-        reward_scale=FLAGS.reward_scale,
-        reward_bias=FLAGS.reward_bias,
-        scale_and_clip_action=env_type in ("antmaze", "kitchen", "locomotion"),
-        action_clip_lim=FLAGS.clip_action,
-        seed=FLAGS.seed,
-    )
-    eval_env = make_gym_env(
-        env_name=FLAGS.env,
-        scale_and_clip_action=env_type in ("antmaze", "kitchen", "locomotion"),
-        action_clip_lim=FLAGS.clip_action,
-        seed=FLAGS.seed + 1000,
-    )
-
+    if FLAGS.env in ("NutAssemblySquare","Lift","PickPlaceCan","TwoArmTransport","ToolHang"):
+        finetune_env = robosuite_env(FLAGS.env,FLAGS.reward_scale,FLAGS.reward_bias)
+        eval_env = robosuite_env(FLAGS.env,FLAGS.reward_scale,FLAGS.reward_bias)
+        # pass
+    else:
+        finetune_env = make_gym_env(
+            env_name=FLAGS.env,
+            reward_scale=FLAGS.reward_scale,
+            reward_bias=FLAGS.reward_bias,
+            scale_and_clip_action=env_type in ("antmaze", "kitchen", "locomotion"),
+            action_clip_lim=FLAGS.clip_action,
+            seed=FLAGS.seed,
+        )
+        eval_env = make_gym_env(
+            env_name=FLAGS.env,
+            scale_and_clip_action=env_type in ("antmaze", "kitchen", "locomotion"),
+            action_clip_lim=FLAGS.clip_action,
+            seed=FLAGS.seed + 1000,
+        )
+    # obs,_ = finetune_env.reset()
+    # action = np.random.uniform(low=-1.0, high=1.0, size=(7,))
+    # nobs,reward,done,truncated,info = finetune_env.step(action)
+    
+    assert True,f'{nobs.shape}'
+    
     """
     load dataset
     """
@@ -170,6 +184,12 @@ def main(_):
             reward_bias=FLAGS.reward_bias,
             clip_action=FLAGS.clip_action,
         )
+    elif env_type == "robosuite":
+        if FLAGS.agent == "calql":
+            dataset = get_robosuite_dataset_mc(FLAGS.data_path,FLAGS.env,FLAGS.reward_scale,FLAGS.reward_bias,50)
+        else:
+            dataset = get_robosuite_dataset(FLAGS.data_path,FLAGS.env,FLAGS.reward_scale,FLAGS.reward_bias,50)
+        # pass
     else:
         if FLAGS.agent == "calql":
             # need dataset with mc return
@@ -214,9 +234,17 @@ def main(_):
         **FLAGS.config.agent_kwargs,
     )
 
+    ref_agent = agents[FLAGS.agent].create(
+        rng=construct_rng,
+        observations=example_batch["observations"],
+        actions=example_batch["actions"],
+        encoder_def=None,
+        **FLAGS.config.agent_kwargs,
+    )
     if FLAGS.resume_path != "":
         assert os.path.exists(FLAGS.resume_path), "resume path does not exist"
         agent = checkpoints.restore_checkpoint(FLAGS.resume_path, target=agent)
+        ref_agent = checkpoints.restore_checkpoint(FLAGS.resume_path, target=ref_agent)
 
     """
     eval function
@@ -240,7 +268,7 @@ def main(_):
             "average_return": np.mean([np.sum(t["rewards"]) for t in trajs]),
             "average_traj_length": np.mean([len(t["rewards"]) for t in trajs]),
         }
-        if env_type == "adroit-binary":
+        if env_type == "adroit-binary" or env_type == "robosuite":
             # adroit
             eval_info["success_rate"] = np.mean(
                 [any(d["goal_achieved"] for d in t["infos"]) for t in trajs]
@@ -257,12 +285,8 @@ def main(_):
                 [eval_env.get_normalized_score(np.sum(t["rewards"])) for t in trajs]
             )
         
-        #calculate kl
-        batch = subsample_batch(dataset, 512)
-        
-
-        wandb_logger.log({"evaluation": eval_info}, step=step_number)
-
+        return eval_info
+        # wandb_logger.log({"evaluation": eval_info}, step=step_number)
     """
     training loop
     """
@@ -271,11 +295,12 @@ def main(_):
     is_online_stage = False
     observation, info = finetune_env.reset()
     done = False  # env done signal
-
+    assert True,f"total:{FLAGS.num_offline_steps + FLAGS.num_online_steps}----------------------"
     for _ in tqdm.tqdm(range(step, FLAGS.num_offline_steps + FLAGS.num_online_steps)):
         """
         Switch from offline to online
         """
+        # print("JAX backend:", default_backend())
         if not is_online_stage and step >= FLAGS.num_offline_steps:
             logging.info("Switching to online training")
             is_online_stage = True
@@ -285,7 +310,10 @@ def main(_):
                 offline_dataset_size = dataset["actions"].shape[0]
                 dataset_items = dataset.items()
                 for j in range(offline_dataset_size):
-                    transition = {k: v[j] for k, v in dataset_items}
+                    if FLAGS.agent == 'calql':
+                        transition = {k: v[j] for k, v in dataset_items}
+                    else:
+                        transition = {k: v[j] for k, v in dataset_items if k != 'mc_returns'}
                     replay_buffer.insert(transition)
 
             # option for CQL and CalQL to change the online alpha, and whether to use CQL regularizer
@@ -310,7 +338,6 @@ def main(_):
                 next_observation, reward, done, truncated, info = finetune_env.step(
                     action
                 )
-
                 transition = dict(
                     observations=observation,
                     next_observations=next_observation,
@@ -396,13 +423,49 @@ def main(_):
                     evaluate_with_trajectories, clip_action=FLAGS.clip_action
                 )
 
-                evaluate_and_log_results(
+                eval_info = evaluate_and_log_results(
                     eval_env=eval_env,
                     policy_fn=policy_fn,
                     eval_func=eval_func,
                     step_number=step,
                     wandb_logger=wandb_logger,
                 )
+                
+                #calculate q
+                # off_batch = subsample_batch(dataset, 512)
+                # on_batch = replay_buffer.sample(512)
+                # observations = off_batch["observations"]
+                # off_qs = agent.forward_value(observations,train=False)
+                # eval_info["off_q"] = off_qs.mean()
+                # off_qs_ref = ref_agent.forward_value(observations,train=False)
+                # eval_info["delta_q"] = (off_qs-off_qs_ref).mean()
+                # #calculate variance
+                # on_q,on_qs = agent.forward_values(on_batch["observations"],train=False)
+                # eval_info["on_q"] = on_q.mean()
+                # print(f'on_qs:{on_qs.shape}')
+                # on_stds = jnp.std(on_qs,axis=0,ddof=1)
+                # print(f'on_std:{on_stds.shape}')
+                # eval_info["on_q_std_mean"] = on_stds.mean()
+                # eval_info["on_q_std_max"] = on_stds.max()
+                # eval_info["on_q_std_min"] = on_stds.min()
+                # # calculate q kl
+                # logp = jax.nn.log_softmax(off_qs_ref, axis=0)  # log π_ref
+                # logq = jax.nn.log_softmax(off_qs, axis=0)      # log π
+                # p = jnp.exp(logp)                                    # π_ref
+                # q_kl = jnp.sum(p * (logp - logq), axis=0)  # shape [B]
+                # eval_info["q_kl"] = jnp.mean(q_kl)
+                # # calculate act kl
+                # rng, rng_dist, rng_ref = jax.random.split(rng, 3)
+                # dist = agent.forward_policy(observations, rng=rng_dist, train=False)
+                # dist_ref = ref_agent.forward_policy(observations, rng=rng_ref, train=False)
+                # kl = kl_divergence_normal_diag(dist_ref, dist)
+                # # act_ref,logp_ref = ref_agent.forward_policy_and_sample(observations,eval_action_rng,repeat=10) #(batch,repeat,action_dim),(batch,repeat)
+                # # logp = dist.log_prob()
+                # # kl_per_sample = jnp.mean(logp_ref - logp, axis=1)
+                # eval_info["act_kl"] = jnp.mean(kl)
+                logging.info(f"current step:{step}!!!!!!!!!!!!!!!!!!!!!!!!")
+                wandb_logger.log({"evaluation": eval_info}, step=step)
+
 
         """
         Save Checkpoint
@@ -427,6 +490,25 @@ def main(_):
 
             wandb_logger.log({"timer": timer.get_average_times()}, step=step)
 
+
+def kl_divergence_normal_diag(dist_ref, dist):
+    base_ref = dist_ref.distribution
+    base = dist.distribution
+    mu1, std1 = base_ref.loc, base_ref.scale_diag
+    mu2, std2 = base.loc, base.scale_diag
+
+    var1 = std1 ** 2
+    var2 = std2 ** 2
+
+    kl_per_dim = (
+        (var1 / var2)
+        + ((mu2 - mu1) ** 2) / var2
+        - 1
+        + 2 * (jnp.log(std2) - jnp.log(std1))
+    )
+
+    kl = 0.5 * jnp.sum(kl_per_dim, axis=-1)  # shape: [B]
+    return kl
 
 if __name__ == "__main__":
     app.run(main)

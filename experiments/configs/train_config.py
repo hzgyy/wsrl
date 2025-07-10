@@ -110,7 +110,8 @@ def get_config(config_string):
                 agent_kwargs=get_iql_config(
                     updates=dict(
                         policy_network_kwargs=dict(
-                            hidden_dims=(256, 256),
+                            # hidden_dims=(256, 256),
+                            hidden_dims=(512, 512),
                             kernel_init_type="var_scaling",
                             kernel_scale_final=1e-2,
                             dropout_rate=0.1,

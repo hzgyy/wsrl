@@ -43,8 +43,8 @@ def evaluate(
 
 
 def evaluate_with_trajectories(
-    policy_fn, env: gym.Env, num_episodes: int, clip_action: float = np.inf
-) -> Dict[str, float]:
+    policy_fn, env, num_episodes: int, clip_action: float = np.inf
+):
     trajectories = []
     stats = defaultdict(list)
 
