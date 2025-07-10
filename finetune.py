@@ -114,10 +114,12 @@ def main(_):
 
     min_steps_to_update = FLAGS.batch_size * (1 - FLAGS.offline_data_ratio)
     if FLAGS.agent == "calql":
+        # min_steps_to_update = max(
+        #     min_steps_to_update, gym.make(FLAGS.env)._max_episode_steps
+        # )
         min_steps_to_update = max(
-            min_steps_to_update, gym.make(FLAGS.env)._max_episode_steps
+            min_steps_to_update, 300
         )
-
     """
     wandb and logging
     """

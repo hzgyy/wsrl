@@ -202,14 +202,27 @@ def get_robosuite_dataset_mc(data_path:str,env_name:str,reward_scale,reward_bias
         states = np.concatenate(temp_states, axis=1)
         assert states.shape[0] == actions.shape[0]
 
+        #stack
+        pstates = np.zeros_like(states)
+        ppstates = np.zeros_like(states)
+        pstates[1:] = states[0:-1]
+        ppstates[2:] = states[0:-2]
+        states = stack_three(states,pstates,ppstates)
+
         rewards = np.array(episode["rewards"])
         rewards = rewards * reward_scale + reward_bias
         dones = np.array(episode["dones"])
+        done_index = np.argmax(dones == 1)
         
         next_states = np.zeros_like(states)
         next_states[:-1] = states[1:]
+        states = states[:done_index+1]
+        actions = actions[:done_index+1]
+        rewards = rewards[:done_index+1]
+        dones = dones[:done_index+1]
+        next_states = next_states[:done_index+1]
         #calculate mc return
-        mc = np.zeros_like(states)
+        mc = np.zeros((states.shape[0],))
         prev_return = 0
         for i in reversed(range(len(states))):
             mc[i] = rewards[i] + 0.99 * (1-dones[i])*prev_return
